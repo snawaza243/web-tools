@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Cropper</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+<style>
+  #container {
+    text-align: center;
+  }
+  #imagePreview {
+    max-width: 300px;
+    max-height: 300px;
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <input type="file" id="imageInput" accept="image/*">
+  <br>
+  <img id="imagePreview">
+  <br>
+  <button onclick="saveCroppedImage()">Save Cropped Image</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+<script>
+let cropper;
+
+document.getElementById('imageInput').addEventListener('change', function() {
+  const file = this.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const imagePreview = document.getElementById('imagePreview');
+    imagePreview.src = e.target.result;
+
+    // Initialize Cropper.js
+    if (cropper) {
+      cropper.replace(e.target.result);
+    } else {
+      cropper = new Cropper(imagePreview, {
+        aspectRatio: 1, // Aspect ratio for circular cropping
+        viewMode: 1,    // Show the complete image in the crop box
+        dragMode: 'move', // Enable drag mode
+        responsive: true, // Resize the crop box with the container
+        crop: function(event) {
+          const canvas = this.cropper.getCroppedCanvas({
+            width: 300,
+            height: 300,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+          });
+
+          const mask = document.createElement('canvas');
+          mask.width = canvas.width;
+          mask.height = canvas.height;
+          const ctx = mask.getContext('2d');
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, mask.width, mask.height);
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.arc(mask.width / 2, mask.height / 2, mask.width / 2, 0, 2 * Math.PI);
+          ctx.fill();
+
+          ctx.globalCompositeOperation = 'source-in';
+          ctx.drawImage(canvas, 0, 0);
+
+          this.cropper.getCropBoxData().clone = mask;
+        }
+      });
+    }
+  }
+  reader.readAsDataURL(file);
+});
+
+function saveCroppedImage() {
+  if (cropper) {
+    cropper.getCroppedCanvas().toBlob(function(blob) {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'cropped_image.png';
+      link.click();
+    }, 'image/png');
+  }
+}
+</script>
+</body>
+</html>
