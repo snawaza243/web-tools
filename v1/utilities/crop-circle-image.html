@@ -1,0 +1,292 @@
+c:\Users\Lenovo\Downloads\web-tools\v1\utilities\crop-circle-image.html<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Circle Image Cropper</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    input[type="file"] {
+      margin-bottom: 20px;
+    }
+    .cropper-container {
+      position: relative;
+      width: 100%;
+      height: 400px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    #cropper {
+      max-width: 100%;
+      max-height: 100%;
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    #result {
+      margin-top: 20px;
+    }
+    #result img {
+      border-radius: 50%;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .border-controls, .resolution-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .border-controls input[type="color"] {
+      width: 50px;
+      height: 30px;
+      padding: 0;
+      border: none;
+      cursor: pointer;
+    }
+    .border-controls input[type="range"] {
+      width: 100px;
+    }
+    .resolution-controls input {
+      width: 80px;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .saved-images {
+      margin-top: 20px;
+    }
+    .saved-images img {
+      border-radius: 50%;
+      margin: 5px;
+      cursor: pointer;
+    }
+    .delete-button {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .delete-button:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <h1>Advanced Circle Image Cropper</h1>
+  <div class="container">
+    <input type="file" id="imageInput" accept="image/*">
+    <div class="cropper-container">
+      <img id="cropper" src="#" alt="Cropper" style="display: none;">
+    </div>
+    <div class="controls">
+      <div class="buttons">
+        <button onclick="cropImage()">Crop Image</button>
+        <button onclick="saveImage()">Save Image</button>
+        <button onclick="resetCropper()">Reset</button>
+      </div>
+      <div class="border-controls">
+        <input type="color" id="borderColor" value="#3498db">
+        <input type="range" id="borderWidth" min="1" max="20" value="5">
+      </div>
+      <div class="resolution-controls">
+        <label for="width">Width:</label>
+        <input type="number" id="width" min="100" max="1000" value="200">
+        <label for="height">Height:</label>
+        <input type="number" id="height" min="100" max="1000" value="200" disabled>
+      </div>
+    </div>
+    <div id="result"></div>
+    <div class="saved-images" id="savedImages"></div>
+  </div>
+
+  <script>
+    const imageInput = document.getElementById('imageInput');
+    const cropperImg = document.getElementById('cropper');
+    const resultDiv = document.getElementById('result');
+    const borderColorInput = document.getElementById('borderColor');
+    const borderWidthInput = document.getElementById('borderWidth');
+    const widthInput = document.getElementById('width');
+    const heightInput = document.getElementById('height');
+    const savedImagesDiv = document.getElementById('savedImages');
+    let cropper;
+
+    // Load image when file is selected
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          cropperImg.src = event.target.result;
+          cropperImg.style.display = 'block';
+
+          // Initialize Cropper.js
+          if (cropper) {
+            cropper.destroy();
+          }
+          cropper = new Cropper(cropperImg, {
+            aspectRatio: 1, // Force square aspect ratio
+            viewMode: 1, // Restrict crop box to the image size
+            autoCropArea: 1, // Automatically set crop area to the entire image
+            guides: false,
+            highlight: false,
+            cropBoxResizable: true,
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Crop the image into a circle
+    function cropImage() {
+      if (!cropper) {
+        alert('Please upload an image first.');
+        return;
+      }
+
+      // Get the cropped canvas
+      const canvas = cropper.getCroppedCanvas({
+        width: parseInt(widthInput.value),
+        height: parseInt(heightInput.value),
+        fillColor: '#fff', // Fill the background with white
+      });
+
+      // Convert canvas to a circular image
+      const circularCanvas = document.createElement('canvas');
+      circularCanvas.width = parseInt(widthInput.value);
+      circularCanvas.height = parseInt(heightInput.value);
+      const ctx = circularCanvas.getContext('2d');
+
+      // Draw the circular mask
+      ctx.beginPath();
+      ctx.arc(circularCanvas.width / 2, circularCanvas.height / 2, circularCanvas.width / 2, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.clip();
+
+      // Draw the cropped image onto the circular canvas
+      ctx.drawImage(canvas, 0, 0, circularCanvas.width, circularCanvas.height);
+
+      // Add border if specified
+      const borderColor = borderColorInput.value;
+      const borderWidth = parseInt(borderWidthInput.value);
+      if (borderWidth > 0) {
+        ctx.beginPath();
+        ctx.arc(circularCanvas.width / 2, circularCanvas.height / 2, circularCanvas.width / 2, 0, Math.PI * 2, true);
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = borderWidth;
+        ctx.stroke();
+      }
+
+      // Display the result
+      const resultImg = document.createElement('img');
+      resultImg.src = circularCanvas.toDataURL('image/png');
+      resultDiv.innerHTML = '';
+      resultDiv.appendChild(resultImg);
+
+      // Save the result to local storage
+      saveToLocalStorage(resultImg.src);
+    }
+
+    // Save the cropped image to the device
+    function saveImage() {
+      const resultImg = resultDiv.querySelector('img');
+      if (!resultImg) {
+        alert('No cropped image available.');
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.href = resultImg.src;
+      link.download = 'cropped-image.png';
+      link.click();
+    }
+
+    // Reset the cropper and clear fields
+    function resetCropper() {
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+      cropperImg.src = '#';
+      cropperImg.style.display = 'none';
+      resultDiv.innerHTML = '';
+      imageInput.value = '';
+    }
+
+    // Save image to local storage
+    function saveToLocalStorage(imageSrc) {
+      let savedImages = JSON.parse(localStorage.getItem('savedImages')) || [];
+      savedImages.push(imageSrc);
+      localStorage.setItem('savedImages', JSON.stringify(savedImages));
+      displaySavedImages();
+    }
+
+    // Display saved images from local storage
+    function displaySavedImages() {
+      const savedImages = JSON.parse(localStorage.getItem('savedImages')) || [];
+      savedImagesDiv.innerHTML = savedImages.map((image, index) => `
+        <div>
+          <img src="${image}" alt="Saved Image ${index}" width="100">
+          <button class="delete-button" onclick="deleteImage(${index})">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    // Delete image from local storage
+    function deleteImage(index) {
+      let savedImages = JSON.parse(localStorage.getItem('savedImages')) || [];
+      savedImages.splice(index, 1);
+      localStorage.setItem('savedImages', JSON.stringify(savedImages));
+      displaySavedImages();
+    }
+
+    // Auto-adjust height when width is changed
+    widthInput.addEventListener('input', () => {
+      heightInput.value = widthInput.value;
+    });
+
+    // Load saved images on page load
+    window.addEventListener('load', displaySavedImages);
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+</body>
+</html>
