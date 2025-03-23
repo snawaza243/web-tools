@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intraday Trading Practice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+        }
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .stock-price {
+            font-size: 1.2em;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .price-up {
+            color: #28a745;
+            display: inline-block;
+            animation: priceChange 1s ease-in-out;
+        }
+        .price-down {
+            color: #dc3545;
+            display: inline-block;
+            animation: priceChange 1s ease-in-out;
+        }
+        @keyframes priceChange {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+        .candlestick {
+            display: inline-block;
+            width: 10px;
+            height: 30px;
+            margin: 0 2px;
+            background-color: #ccc;
+            position: relative;
+        }
+        .candlestick.up {
+            background-color: #28a745;
+        }
+        .candlestick.down {
+            background-color: #dc3545;
+        }
+        .candlestick .wick {
+            width: 1px;
+            height: 10px;
+            background-color: #000;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .candlestick .wick.top {
+            top: -10px;
+        }
+        .candlestick .wick.bottom {
+            bottom: -10px;
+        }
+        #candlestickChart {
+            overflow-x: auto;
+            white-space: nowrap;
+            max-width: 100%;
+            padding: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Step 1: Select Wallet Amount -->
+        <div id="step1" class="step active">
+            <h2>Step 1: Add Funds to Your Wallet</h2>
+            <p>You will receive 5X limit of your trading wallet balance!</p>
+            <p>Select the dummy amount you want to top-up in your wallet:</p>
+            <button onclick="selectAmount(200)">₹200</button>
+            <button onclick="selectAmount(400)">₹400</button>
+            <button onclick="selectAmount(1200)">₹1,200</button>
+            <button onclick="selectAmount(2000)">₹2,000</button>
+        </div>
+
+        <!-- Step 2: Show 5x Booster -->
+        <div id="step2" class="step">
+            <h2>Step 2: Trading Booster Activated</h2>
+            <p>Your wallet balance: <span id="walletBalance">₹0</span></p>
+            <p>Trading limit (5X): <span id="tradingLimit">₹0</span></p>
+            <button onclick="goToStep(3)">Next</button>
+        </div>
+
+        <!-- Step 3: Market Open -->
+        <div id="step3" class="step">
+            <h2>Step 3: Market Opens at 9:30 AM</h2>
+            <p>It's 9:30 AM, let's get ready!</p>
+            <p>You choose stocks which you can buy and sell on the same day.</p>
+            <p>You have the 5x boosted value of <span id="boostedValue">₹0</span> to buy.</p>
+            <button onclick="goToStep(4)">Okay</button>
+        </div>
+
+        <!-- Step 4: Select Stock -->
+        <div id="step4" class="step">
+            <h2>Step 4: Select Stock</h2>
+            <p>Select stock you want to trade in today's trading session:</p>
+            <button onclick="selectStock('Oil Stock', 50)">Oil Stock - Trading at ₹50</button>
+            <button onclick="selectStock('Auto Stock', 40)">Auto Stock - Trading at ₹40</button>
+            <button onclick="selectStock('Telecom Stock', 20)">Telecom Stock - Trading at ₹20</button>
+            <button onclick="selectStock('Bank Stock', 10)">Bank Stock - Trading at ₹10</button>
+        </div>
+
+        <!-- Step 5: Select Quantity -->
+        <div id="step5" class="step">
+            <h2>Step 5: Buy Stock</h2>
+            <p>Your wallet balance: <span id="walletBalance2">₹0</span></p>
+            <p>Trading limit (5X): <span id="tradingLimit2">₹0</span></p>
+            <p>How much quantity of <span id="selectedStock">Stock</span> you want to buy?</p>
+            <button onclick="selectQuantity(4, 200)">4 qty worth ₹200</button>
+            <button onclick="selectQuantity(8, 400)">8 qty worth ₹400</button>
+            <button onclick="selectQuantity(16, 800)">16 qty worth ₹800</button>
+            <button onclick="selectQuantity(20, 1000)">20 qty worth ₹1,000</button>
+        </div>
+
+        <!-- Step 6: Buy Order Success -->
+        <div id="step6" class="step">
+            <h2>Step 6: Intraday Buy Order Success</h2>
+            <p>Your buy order has been executed</p>
+            <p><strong><span id="selectedStock2">Stock</span></strong></p>
+            <p>Order placed on 23 Mar, 2025, 09:30 AM</p>
+            <p>Order Type: Buy, Intraday</p>
+            <p>Quantity: <span id="quantity">0</span></p>
+            <p>Buy Type: At Market</p>
+            <p>Buy Price: ₹<span id="buyPrice">0</span></p>
+            <p>Exchange: NSE</p>
+            <p>Validity: Day End</p>
+            <button onclick="goToStep(7)">Done</button>
+        </div>
+
+        <!-- Step 7: Price Animation -->
+        <div id="step7" class="step">
+            <h2>Step 7: Market Movement</h2>
+            <p>30 mins into the market</p>
+            <p><strong><span id="selectedStock3">Stock</span></strong></p>
+            <div id="priceAnimation" class="stock-price"></div>
+            <div id="candlestickChart"></div>
+            <p>Today's position:</p>
+            <p>Avg. Buy Price: ₹<span id="avgBuyPrice">0</span></p>
+            <p>Net Qty.: <span id="netQty">0</span></p>
+            <p>Profit: <span id="profit">₹0</span></p>
+            <button onclick="stopAnimation()">Okay</button>
+        </div>
+
+        <!-- Step 8: Sell Decision -->
+        <div id="step8" class="step">
+            <h2>Step 8: Sell Decision</h2>
+            <p>Time: 10:00 AM</p>
+            <p>Market will close in 5hrs 30mins</p>
+            <p>Sell <span id="selectedStock4">Stock</span> now?</p>
+            <p>Invested Amount: ₹<span id="investedAmount">0</span></p>
+            <p>You bought stock at: ₹<span id="boughtPrice">0</span></p>
+            <p>Live price of stock: ₹<span id="livePrice">0</span></p>
+            <p>Your profit per share: ₹<span id="profitPerShare">0</span></p>
+            <p>Number of stocks bought: <span id="numStocks">0</span></p>
+            <p>Amount of stock sold: ₹<span id="soldAmount">0</span></p>
+            <p>Total Profit if you sell now: ₹<span id="totalProfit">0</span></p>
+            <button onclick="sellStock()">Sell and Book Profit</button>
+            <button onclick="wait()">Wait</button>
+        </div>
+
+        <!-- Step 9: Practice Completed -->
+        <div id="step9" class="step">
+            <h2>Practice Completed</h2>
+            <p>What did you learn?</p>
+            <p>Added to your wallet: ₹<span id="finalWallet">0</span></p>
+            <p>Trading limit boosted to 5x: ₹<span id="finalLimit">0</span></p>
+            <p>Stocks bought: ₹<span id="finalQty">0</span></p>
+            <p>Buy Price: ₹<span id="finalBuyPrice">0</span></p>
+            <p>Sell Price: ₹<span id="finalSellPrice">0</span></p>
+            <p>Profit Booked: ₹<span id="finalProfit">0</span></p>
+        </div>
+    </div>
+
+    <script>
+        let walletBalance = 0;
+        let tradingLimit = 0;
+        let selectedStock = '';
+        let stockPrice = 0;
+        let quantity = 0;
+        let buyPrice = 0;
+        let livePrice = 0;
+        let profit = 0;
+        let animationInterval;
+
+        function goToStep(step) {
+            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+
+            // Start animation when reaching Step 7
+            if (step === 7) {
+                console.log("Starting animation for Step 7");
+                startAnimation();
+            }
+        }
+
+        function selectAmount(amount) {
+            walletBalance = amount;
+            tradingLimit = amount * 5;
+            document.getElementById('walletBalance').innerText = `₹${walletBalance}`;
+            document.getElementById('tradingLimit').innerText = `₹${tradingLimit}`;
+            document.getElementById('walletBalance2').innerText = `₹${walletBalance}`;
+            document.getElementById('tradingLimit2').innerText = `₹${tradingLimit}`;
+            document.getElementById('boostedValue').innerText = `₹${tradingLimit}`;
+            goToStep(2);
+        }
+
+        function selectStock(stock, price) {
+            selectedStock = stock;
+            stockPrice = price;
+            buyPrice = price;
+            livePrice = price; // Initialize livePrice with the buyPrice
+            document.getElementById('selectedStock').innerText = selectedStock;
+            document.getElementById('selectedStock2').innerText = selectedStock;
+            document.getElementById('selectedStock3').innerText = selectedStock;
+            document.getElementById('selectedStock4').innerText = selectedStock;
+            goToStep(5);
+        }
+
+        function selectQuantity(qty, amount) {
+            quantity = qty;
+            document.getElementById('quantity').innerText = quantity;
+            document.getElementById('buyPrice').innerText = stockPrice;
+            document.getElementById('avgBuyPrice').innerText = stockPrice;
+            document.getElementById('netQty').innerText = quantity;
+            document.getElementById('investedAmount').innerText = amount;
+            document.getElementById('boughtPrice').innerText = stockPrice;
+            document.getElementById('numStocks').innerText = quantity;
+            goToStep(6);
+        }
+
+        function startAnimation() {
+            const priceDiv = document.getElementById('priceAnimation');
+            const candlestickChart = document.getElementById('candlestickChart');
+
+            // Initialize the first price display
+            priceDiv.innerHTML = `₹${livePrice} <span class="price-up">Initial</span>`;
+
+            animationInterval = setInterval(() => {
+                // Generate a random price change between -1% and +1%
+                const changePercent = (Math.random() * 2 - 1).toFixed(2); // Random between -1 and 1
+                const changeValue = (buyPrice * (changePercent / 100)).toFixed(2);
+                livePrice = (parseFloat(livePrice) + parseFloat(changeValue)).toFixed(2);
+
+                // Ensure livePrice doesn't go negative
+                if (livePrice < 0) livePrice = 0;
+
+                // Determine if the price went up or down
+                const isUp = changeValue >= 0;
+                const className = isUp ? 'price-up' : 'price-down';
+                const candlestickClass = isUp ? 'up' : 'down';
+                const changeDisplay = `${isUp ? '▲' : '▼'} ${Math.abs(changePercent)}%`;
+
+                // Update price display
+                priceDiv.innerHTML = `₹${livePrice} <span class="${className}">${changeDisplay}</span>`;
+
+                // Add candlestick
+                const candlestick = document.createElement('div');
+                candlestick.className = `candlestick ${candlestickClass}`;
+                candlestick.innerHTML = `
+                    <div class="wick top"></div>
+                    <div class="wick bottom"></div>
+                `;
+                candlestickChart.appendChild(candlestick);
+
+                // Limit the number of candlesticks to 20 to avoid overcrowding
+                const candlesticks = candlestickChart.getElementsByClassName('candlestick');
+                if (candlesticks.length > 20) {
+                    candlestickChart.removeChild(candlesticks[0]);
+                }
+
+                // Auto-scroll to the latest candlestick
+                candlestickChart.scrollLeft = candlestickChart.scrollWidth;
+
+                // Update profit
+                profit = (livePrice - buyPrice) * quantity;
+                document.getElementById('profit').innerText = profit >= 0 ? `+₹${profit.toFixed(2)}` : `-₹${Math.abs(profit).toFixed(2)}`;
+            }, 2000);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            console.log("Animation stopped by user");
+            document.getElementById('livePrice').innerText = livePrice;
+            document.getElementById('profitPerShare').innerText = (livePrice - buyPrice).toFixed(2);
+            document.getElementById('soldAmount').innerText = (livePrice * quantity).toFixed(2);
+            document.getElementById('totalProfit').innerText = profit.toFixed(2);
+            goToStep(8);
+        }
+
+        function sellStock() {
+            document.getElementById('finalWallet').innerText = walletBalance;
+            document.getElementById('finalLimit').innerText = tradingLimit;
+            document.getElementById('finalQty').innerText = quantity;
+            document.getElementById('finalBuyPrice').innerText = buyPrice;
+            document.getElementById('finalSellPrice').innerText = livePrice;
+            document.getElementById('finalProfit').innerText = profit.toFixed(2);
+            goToStep(9);
+        }
+
+        function wait() {
+            alert("You chose to wait. In a real scenario, the market would continue to fluctuate!");
+        }
+    </script>
+</body>
+</html>
