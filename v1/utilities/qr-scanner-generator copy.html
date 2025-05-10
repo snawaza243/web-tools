@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator & Reader | Your Blogger Site</title>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --dark-color: #202124;
+            --light-color: #f8f9fa;
+            --danger-color: #ea4335;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            color: #666;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .tool-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .tool-section {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section-title {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        input[type="text"], 
+        textarea, 
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .color-picker input[type="color"] {
+            width: 50px;
+            height: 40px;
+            padding: 2px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #3367d6;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #d33426;
+        }
+        
+        .qr-result {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px dashed #ddd;
+            border-radius: 5px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #qrcode {
+            margin: 15px 0;
+        }
+        
+        .download-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        #scanner {
+            width: 100%;
+            border-radius: 5px;
+        }
+        
+        #scan-result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            word-break: break-all;
+        }
+        
+        .upload-area {
+            border: 2px dashed #ddd;
+            padding: 30px;
+            text-align: center;
+            border-radius: 5px;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .features {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+        }
+        
+        .features h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .feature-card {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-card h3 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .tool-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>QR Code Generator & Reader</h1>
+            <p class="description">Create custom QR codes for URLs, text, contact info and more. Also scan QR codes using your webcam or by uploading an image.</p>
+        </header>
+        
+        <div class="tool-container">
+            <div class="tool-section">
+                <h2 class="section-title">Generate QR Code</h2>
+                <div class="form-group">
+                    <label for="qr-content">Content to encode:</label>
+                    <textarea id="qr-content" placeholder="Enter text, URL, or other content to generate QR code"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="qr-size">QR Code Size:</label>
+                    <select id="qr-size">
+                        <option value="100">100x100</option>
+                        <option value="150">150x150</option>
+                        <option value="200" selected>200x200</option>
+                        <option value="250">250x250</option>
+                        <option value="300">300x300</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>QR Code Colors:</label>
+                    <div class="color-picker">
+                        <label for="qr-fg-color">Foreground:</label>
+                        <input type="color" id="qr-fg-color" value="#000000">
+                        <label for="qr-bg-color">Background:</label>
+                        <input type="color" id="qr-bg-color" value="#ffffff">
+                    </div>
+                </div>
+                
+                <button id="generate-btn">Generate QR Code</button>
+                
+                <div class="qr-result">
+                    <p>Your QR code will appear here</p>
+                    <div id="qrcode"></div>
+                    <div class="download-options hidden" id="download-options">
+                        <button class="btn-secondary" id="download-png">Download PNG</button>
+                        <button class="btn-secondary" id="download-svg">Download SVG</button>
+                        <button class="btn-secondary" id="copy-to-clipboard">Copy Image</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tool-section">
+                <h2 class="section-title">Read QR Code</h2>
+                <div class="form-group">
+                    <label>Scan Mode:</label>
+                    <select id="scan-mode">
+                        <option value="camera">Use Camera</option>
+                        <option value="upload">Upload Image</option>
+                    </select>
+                </div>
+                
+                <div id="camera-container">
+                    <div class="scanner-container">
+                        <video id="scanner" playsinline></video>
+                    </div>
+                    <button id="start-scan" class="btn-secondary">Start Scanner</button>
+                    <button id="stop-scan" class="btn-danger hidden">Stop Scanner</button>
+                </div>
+                
+                <div id="upload-container" class="hidden">
+                    <div class="upload-area" id="upload-area">
+                        <p>Click to browse or drag & drop QR code image</p>
+                        <input type="file" id="file-input" accept="image/*" class="hidden">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Scan Result:</label>
+                    <div id="scan-result">No QR code scanned yet</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="features">
+            <h2>Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>Custom QR Codes</h3>
+                    <p>Generate QR codes with customizable colors and sizes to match your brand or style.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Multiple Formats</h3>
+                    <p>Download your QR codes in PNG or SVG format for high-quality printing and digital use.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Webcam Scanning</h3>
+                    <p>Scan QR codes in real-time using your device's camera for instant access to information.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Image Upload</h3>
+                    <p>Upload images containing QR codes to decode them without needing a camera.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Copy to Clipboard</h3>
+                    <p>Easily copy your generated QR code image to paste into documents or presentations.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Free to Use</h3>
+                    <p>This tool is completely free with no watermarks or limitations on usage.</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>QR Code Generator & Reader Tool | Part of Your Blogger Site's Web Tools Collection</p>
+        </footer>
+    </div>
+
+    <!-- Include required libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // QR Code Generation
+            const qrContent = document.getElementById('qr-content');
+            const qrSize = document.getElementById('qr-size');
+            const qrFgColor = document.getElementById('qr-fg-color');
+            const qrBgColor = document.getElementById('qr-bg-color');
+            const generateBtn = document.getElementById('generate-btn');
+            const qrcodeDiv = document.getElementById('qrcode');
+            const downloadOptions = document.getElementById('download-options');
+            const downloadPng = document.getElementById('download-png');
+            const downloadSvg = document.getElementById('download-svg');
+            const copyToClipboard = document.getElementById('copy-to-clipboard');
+            
+            // QR Code Scanning
+            const scanMode = document.getElementById('scan-mode');
+            const cameraContainer = document.getElementById('camera-container');
+            const uploadContainer = document.getElementById('upload-container');
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const startScan = document.getElementById('start-scan');
+            const stopScan = document.getElementById('stop-scan');
+            const scannerVideo = document.getElementById('scanner');
+            const scanResult = document.getElementById('scan-result');
+            
+            let scanning = false;
+            let stream = null;
+            let currentQRCode = null;
+            
+            // Initialize tool based on scan mode
+            scanMode.addEventListener('change', function() {
+                if (this.value === 'camera') {
+                    cameraContainer.classList.remove('hidden');
+                    uploadContainer.classList.add('hidden');
+                    stopScanner();
+                } else {
+                    cameraContainer.classList.add('hidden');
+                    uploadContainer.classList.remove('hidden');
+                    stopScanner();
+                }
+            });
+            
+            // Generate QR Code
+            generateBtn.addEventListener('click', generateQRCode);
+            
+            function generateQRCode() {
+                const content = qrContent.value.trim();
+                if (!content) {
+                    alert('Please enter content to generate QR code');
+                    return;
+                }
+                
+                const size = parseInt(qrSize.value);
+                const fgColor = qrFgColor.value;
+                const bgColor = qrBgColor.value;
+                
+                // Clear previous QR code
+                qrcodeDiv.innerHTML = '';
+                
+                // Generate new QR code
+                QRCode.toCanvas(qrcodeDiv, content, {
+                    width: size,
+                    color: {
+                        dark: fgColor,
+                        light: bgColor
+                    },
+                    margin: 2
+                }, function(error, canvas) {
+                    if (error) {
+                        console.error(error);
+                        alert('Error generating QR code');
+                        return;
+                    }
+                    
+                    currentQRCode = canvas;
+                    downloadOptions.classList.remove('hidden');
+                    
+                    // Center the canvas
+                    canvas.style.display = 'block';
+                    canvas.style.margin = '0 auto';
+                });
+            }
+            
+            // Download PNG
+            downloadPng.addEventListener('click', function() {
+                if (!currentQRCode) return;
+                
+                const link = document.createElement('a');
+                link.download = 'qrcode.png';
+                link.href = currentQRCode.toDataURL('image/png');
+                link.click();
+            });
+            
+            // Download SVG
+            downloadSvg.addEventListener('click', function() {
+                const content = qrContent.value.trim();
+                if (!content || !currentQRCode) return;
+                
+                const size = parseInt(qrSize.value);
+                const fgColor = qrFgColor.value;
+                const bgColor = qrBgColor.value;
+                
+                QRCode.toString(content, {
+                    type: 'svg',
+                    width: size,
+                    color: {
+                        dark: fgColor,
+                        light: bgColor
+                    },
+                    margin: 2
+                }, function(error, svg) {
+                    if (error) {
+                        console.error(error);
+                        alert('Error generating SVG');
+                        return;
+                    }
+                    
+                    const blob = new Blob([svg], {type: 'image/svg+xml'});
+                    const url = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.download = 'qrcode.svg';
+                    link.href = url;
+                    link.click();
+                    
+                    // Clean up
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                });
+            });
+            
+            // Copy to clipboard
+            copyToClipboard.addEventListener('click', function() {
+                if (!currentQRCode) return;
+                
+                currentQRCode.toBlob(function(blob) {
+                    navigator.clipboard.write([
+                        new ClipboardItem({
+                            'image/png': blob
+                        })
+                    ]).then(function() {
+                        alert('QR code copied to clipboard!');
+                    }).catch(function(error) {
+                        console.error(error);
+                        alert('Failed to copy QR code. Please try again.');
+                    });
+                });
+            });
+            
+            // QR Code Scanning
+            startScan.addEventListener('click', startScanner);
+            stopScan.addEventListener('click', stopScanner);
+            
+            function startScanner() {
+                if (scanning) return;
+                
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                    .then(function(s) {
+                        stream = s;
+                        scannerVideo.srcObject = stream;
+                        scannerVideo.play();
+                        scanning = true;
+                        startScan.classList.add('hidden');
+                        stopScan.classList.remove('hidden');
+                        scanResult.textContent = 'Scanning...';
+                        
+                        // Start scanning loop
+                        scanQRCode();
+                    })
+                    .catch(function(err) {
+                        console.error(err);
+                        alert('Could not access the camera. Please make sure you have granted camera permissions.');
+                    });
+            }
+            
+            function stopScanner() {
+                if (!scanning) return;
+                
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+                
+                scanning = false;
+                startScan.classList.remove('hidden');
+                stopScan.classList.add('hidden');
+                scanResult.textContent = 'Scanner stopped';
+            }
+            
+            function scanQRCode() {
+                if (!scanning) return;
+                
+                if (scannerVideo.readyState === scannerVideo.HAVE_ENOUGH_DATA) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = scannerVideo.videoWidth;
+                    canvas.height = scannerVideo.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(scannerVideo, 0, 0, canvas.width, canvas.height);
+                    
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
+                    
+                    if (code) {
+                        scanResult.innerHTML = `<strong>Decoded content:</strong><br>${code.data}`;
+                        
+                        // Optional: stop scanning after successful decode
+                        // stopScanner();
+                    }
+                }
+                
+                // Continue scanning
+                requestAnimationFrame(scanQRCode);
+            }
+            
+            // File upload handling
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', handleFileUpload);
+            
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#4285f4';
+            });
+            
+            uploadArea.addEventListener('dragleave', function() {
+                uploadArea.style.borderColor = '#ddd';
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#ddd';
+                
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileUpload();
+                }
+            });
+            
+            function handleFileUpload() {
+                if (!fileInput.files || !fileInput.files[0]) return;
+                
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                            inversionAttempts: "dontInvert",
+                        });
+                        
+                        if (code) {
+                            scanResult.innerHTML = `<strong>Decoded content:</strong><br>${code.data}`;
+                        } else {
+                            scanResult.textContent = 'No QR code found in the image';
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            
+            // Initialize with camera mode
+            scanMode.dispatchEvent(new Event('change'));
+        });
+    </script>
+</body>
+</html>

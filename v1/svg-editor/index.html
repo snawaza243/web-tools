@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Viewer & Editor</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --panel-bg: #f5f5f5;
+            --border-color: #dddddd;
+            --primary-color: #4285f4;
+            --hover-color: #f0f0f0;
+            --grid-color: rgba(0, 0, 0, 0.1);
+            --active-tool: #d4e3fc;
+        }
+
+        .dark-mode {
+            --bg-color: #1e1e1e;
+            --text-color: #e0e0e0;
+            --panel-bg: #2d2d2d;
+            --border-color: #444444;
+            --primary-color: #5c9eff;
+            --hover-color: #3a3a3a;
+            --grid-color: rgba(255, 255, 255, 0.1);
+            --active-tool: #3a4d6b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .app-header {
+            padding: 10px 20px;
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+        }
+
+        .toolbar button {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toolbar button:hover {
+            background: var(--hover-color);
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .tool-panel,
+        .code-panel {
+            width: 250px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 10px;
+            overflow-y: auto;
+            transition: background-color 0.3s;
+        }
+
+        .code-panel {
+            border-right: none;
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .panel-header h3 {
+            font-size: 1rem;
+        }
+
+        .panel-header button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .tool-section {
+            margin-bottom: 20px;
+        }
+
+        .tool-section h3 {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        .tool-btn {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            cursor: pointer;
+            text-align: left;
+            border-radius: 4px;
+        }
+
+        .tool-btn:hover {
+            background: var(--hover-color);
+        }
+
+        .tool-btn.active {
+            background: var(--active-tool);
+            border-color: var(--primary-color);
+        }
+
+        .property-group {
+            margin-bottom: 10px;
+        }
+
+        .property-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+        }
+
+        .property-group input[type="color"] {
+            width: 100%;
+            height: 30px;
+            cursor: pointer;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .property-group input[type="range"] {
+            width: calc(100% - 30px);
+            vertical-align: middle;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            background-image:
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        #svg-canvas {
+            background-color: transparent;
+            cursor: default;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .zoom-controls button {
+            width: 30px;
+            height: 30px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .zoom-controls button:hover {
+            background: var(--hover-color);
+        }
+
+        #svg-code {
+            flex: 1;
+            width: 100%;
+            background: var(--panel-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            font-family: monospace;
+            resize: none;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .status-bar {
+            padding: 5px 10px;
+            background-color: var(--panel-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+
+        .status-bar span {
+            margin-right: 15px;
+        }
+
+        .selection-box {
+            position: absolute;
+            border: 1px dashed var(--primary-color);
+            background-color: rgba(66, 133, 244, 0.1);
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="light-mode">
+    <div class="app-container">
+        <header class="app-header">
+            <h1>SVG Viewer & Editor</h1>
+            <div class="toolbar">
+                <button id="mode-toggle" title="Toggle Dark Mode">🌓</button>
+                <button id="open-file" title="Open SVG File">📂</button>
+                <button id="save-svg" title="Save as SVG">💾 SVG</button>
+                <button id="save-png" title="Save as PNG">💾 PNG</button>
+                <input type="file" id="file-input" accept=".svg" style="display: none;">
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="tool-panel">
+                <div class="tool-section">
+                    <h3>Shapes</h3>
+                    <button class="tool-btn active" data-tool="select">✏️ Select</button>
+                    <button class="tool-btn" data-tool="rect">⬜ Rectangle</button>
+                    <button class="tool-btn" data-tool="circle">⭕ Circle</button>
+                    <button class="tool-btn" data-tool="ellipse">🔘 Ellipse</button>
+                    <button class="tool-btn" data-tool="line">📏 Line</button>
+                    <button class="tool-btn" data-tool="text">🔤 Text</button>
+                </div>
+
+                <div class="tool-section">
+                    <h3>Properties</h3>
+                    <div class="property-group">
+                        <label>Fill:</label>
+                        <input type="color" id="fill-color" value="#ff0000">
+                    </div>
+                    <div class="property-group">
+                        <label>Stroke:</label>
+                        <input type="color" id="stroke-color" value="#000000">
+                    </div>
+                    <div class="property-group">
+                        <label>Stroke Width:</label>
+                        <input type="range" id="stroke-width" min="0" max="20" value="1">
+                        <span id="stroke-width-value">1</span>
+                    </div>
+                    <div class="property-group">
+                        <label>Opacity:</label>
+                        <input type="range" id="opacity" min="0" max="100" value="100">
+                        <span id="opacity-value">100%</span>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="canvas-container">
+                <div class="svg-viewport" id="svg-viewport">
+                    <svg id="svg-canvas" width="800" height="600" xmlns="http://www.w3.org/2000/svg"></svg>
+                </div>
+                <div class="zoom-controls">
+                    <button id="zoom-in">+</button>
+                    <button id="zoom-out">-</button>
+                    <button id="zoom-reset">1:1</button>
+                    <button id="zoom-fit">Fit</button>
+                </div>
+            </div>
+
+            <aside class="code-panel">
+                <div class="panel-header">
+                    <h3>SVG Code</h3>
+                    <button id="update-code">Update</button>
+                </div>
+                <textarea id="svg-code" spellcheck="false"></textarea>
+            </aside>
+        </div>
+
+        <footer class="status-bar">
+            <span id="cursor-position">X: 0, Y: 0</span>
+            <span id="zoom-level">Zoom: 100%</span>
+            <span id="dimensions">Dimensions: 800 × 600</span>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // DOM Elements
+            const svgCanvas = document.getElementById('svg-canvas');
+            const svgViewport = document.getElementById('svg-viewport');
+            const svgCode = document.getElementById('svg-code');
+            const modeToggle = document.getElementById('mode-toggle');
+            const openFileBtn = document.getElementById('open-file');
+            const fileInput = document.getElementById('file-input');
+            const saveSvgBtn = document.getElementById('save-svg');
+            const savePngBtn = document.getElementById('save-png');
+            const updateCodeBtn = document.getElementById('update-code');
+            const toolButtons = document.querySelectorAll('.tool-btn');
+            const zoomInBtn = document.getElementById('zoom-in');
+            const zoomOutBtn = document.getElementById('zoom-out');
+            const zoomResetBtn = document.getElementById('zoom-reset');
+            const zoomFitBtn = document.getElementById('zoom-fit');
+            const fillColor = document.getElementById('fill-color');
+            const strokeColor = document.getElementById('stroke-color');
+            const strokeWidth = document.getElementById('stroke-width');
+            const strokeWidthValue = document.getElementById('stroke-width-value');
+            const opacity = document.getElementById('opacity');
+            const opacityValue = document.getElementById('opacity-value');
+            const cursorPosition = document.getElementById('cursor-position');
+            const zoomLevel = document.getElementById('zoom-level');
+            const dimensions = document.getElementById('dimensions');
+
+            // App State
+            let currentTool = 'select';
+            let isDrawing = false;
+            let currentElement = null;
+            let startX, startY;
+            let zoom = 1;
+            let selectionBox = null;
+
+            // Initialize
+            initDarkMode();
+            setupEventListeners();
+            updateCodeEditor();
+
+            // Functions
+            function initDarkMode() {
+                const savedMode = localStorage.getItem('darkMode');
+                const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+                if (savedMode === 'true' || (savedMode === null && systemPrefersDark)) {
+                    document.body.classList.add('dark-mode');
+                }
+            }
+
+            function setupEventListeners() {
+                // Dark mode toggle
+                modeToggle.addEventListener('click', () => {
+                    document.body.classList.toggle('dark-mode');
+                    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+                });
+
+                // File operations
+                openFileBtn.addEventListener('click', () => fileInput.click());
+                fileInput.addEventListener('change', handleFileUpload);
+                saveSvgBtn.addEventListener('click', saveAsSvg);
+                savePngBtn.addEventListener('click', saveAsPng);
+
+                // Code editor
+                updateCodeBtn.addEventListener('click', updateSvgFromCode);
+
+                // Tool selection
+                toolButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        toolButtons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+                        currentTool = button.dataset.tool;
+                        svgCanvas.style.cursor = currentTool === 'select' ? 'default' : 'crosshair';
+                    });
+                });
+
+                // Property controls
+                strokeWidth.addEventListener('input', () => {
+                    strokeWidthValue.textContent = strokeWidth.value;
+                    if (currentElement) {
+                        currentElement.setAttribute('stroke-width', strokeWidth.value);
+                        updateCodeEditor();
+                    }
+                });
+
+                opacity.addEventListener('input', () => {
+                    const opacityVal = opacity.value / 100;
+                    opacityValue.textContent = `${opacity.value}%`;
+                    if (currentElement) {
+                        currentElement.setAttribute('opacity', opacityVal);
+                        updateCodeEditor();
+                    }
+                });
+
+                fillColor.addEventListener('input', () => {
+                    if (currentElement) {
+                        currentElement.setAttribute('fill', fillColor.value);
+                        updateCodeEditor();
+                    }
+                });
+
+                strokeColor.addEventListener('input', () => {
+                    if (currentElement) {
+                        currentElement.setAttribute('stroke', strokeColor.value);
+                        updateCodeEditor();
+                    }
+                });
+
+                // Zoom controls
+                zoomInBtn.addEventListener('click', () => setZoom(zoom * 1.2));
+                zoomOutBtn.addEventListener('click', () => setZoom(zoom / 1.2));
+                zoomResetBtn.addEventListener('click', () => setZoom(1));
+                zoomFitBtn.addEventListener('click', fitToView);
+
+                // SVG canvas events
+                svgCanvas.addEventListener('mousedown', startDrawing);
+                svgViewport.addEventListener('mousemove', draw);
+                svgViewport.addEventListener('mouseup', endDrawing);
+                svgViewport.addEventListener('mouseleave', endDrawing);
+                svgViewport.addEventListener('wheel', handleZoom, { passive: false });
+
+                // Select element on click
+                svgCanvas.addEventListener('click', selectElement);
+            }
+
+            function handleFileUpload(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    svgCanvas.innerHTML = event.target.result;
+                    updateCodeEditor();
+                    updateDimensions();
+                };
+                reader.readAsText(file);
+            }
+
+            function saveAsSvg() {
+                const svgData = new XMLSerializer().serializeToString(svgCanvas);
+                const blob = new Blob([svgData], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'drawing.svg';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            async function saveAsPng() {
+                const svgData = new XMLSerializer().serializeToString(svgCanvas);
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                // Create an image from the SVG data
+                const img = new Image();
+                const svgBlob = new Blob([svgData], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(svgBlob);
+
+                img.onload = function () {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    // Convert canvas to PNG and download
+                    canvas.toBlob(function (blob) {
+                        const pngUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = pngUrl;
+                        a.download = 'drawing.png';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(pngUrl);
+                    }, 'image/png');
+                };
+
+                img.src = url;
+            }
+
+            function updateCodeEditor() {
+                const serializer = new XMLSerializer();
+                let svgString = serializer.serializeToString(svgCanvas);
+
+                // Format the SVG code for better readability
+                svgString = svgString
+                    .replace(/></g, '>\n<')
+                    .replace(/\/>/g, ' />')
+                    .replace(/"\/>/g, '" />');
+
+                svgCode.value = svgString;
+            }
+
+            function updateSvgFromCode() {
+                try {
+                    // Parse the SVG code
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(svgCode.value, 'image/svg+xml');
+
+                    // Check for parser errors
+                    const parserErrors = doc.getElementsByTagName('parsererror')[0];
+                    if (parserErrors) {
+                        throw new Error('Invalid SVG code');
+                    }
+
+                    // Get the SVG element from the parsed document
+                    const newSvg = doc.querySelector('svg');
+                    if (!newSvg) {
+                        throw new Error('No SVG element found');
+                    }
+
+                    // Replace the current SVG content
+                    svgCanvas.innerHTML = newSvg.innerHTML;
+
+                    updateDimensions();
+                } catch (e) {
+                    alert('Error updating SVG: ' + e.message);
+                }
+            }
+
+            function startDrawing(e) {
+                if (currentTool === 'select') return;
+
+                isDrawing = true;
+                const rect = svgViewport.getBoundingClientRect();
+                startX = (e.clientX - rect.left) / zoom;
+                startY = (e.clientY - rect.top) / zoom;
+
+                currentElement = createNewElement();
+                if (currentElement) {
+                    svgCanvas.appendChild(currentElement);
+                    updateElement(currentElement, startX, startY, 0, 0);
+                }
+            }
+
+            function draw(e) {
+                if (!isDrawing || !currentElement) return;
+
+                const rect = svgViewport.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / zoom;
+                const y = (e.clientY - rect.top) / zoom;
+                const width = x - startX;
+                const height = y - startY;
+
+                updateElement(currentElement, startX, startY, width, height);
+
+                // Update cursor position display
+                cursorPosition.textContent = `X: ${Math.round(x)}, Y: ${Math.round(y)}`;
+            }
+
+            function endDrawing() {
+                if (!isDrawing) return;
+                isDrawing = false;
+
+                if (currentElement) {
+                    // Remove element if it's too small (accidental click)
+                    const bbox = currentElement.getBBox();
+                    if (bbox.width < 5 && bbox.height < 5) {
+                        svgCanvas.removeChild(currentElement);
+                    } else {
+                        selectElement({ target: currentElement });
+                    }
+                    currentElement = null;
+                }
+
+                updateCodeEditor();
+                updateDimensions();
+            }
+
+            function createNewElement() {
+                const element = document.createElementNS('http://www.w3.org/2000/svg', getElementTag());
+
+                element.setAttribute('fill', fillColor.value);
+                element.setAttribute('stroke', strokeColor.value);
+                element.setAttribute('stroke-width', strokeWidth.value);
+                element.setAttribute('opacity', opacity.value / 100);
+
+                // Special handling for text element
+                if (currentTool === 'text') {
+                    element.textContent = 'Text';
+                    element.setAttribute('font-size', '20');
+                    element.setAttribute('font-family', 'Arial');
+                }
+
+                return element;
+            }
+
+            function getElementTag() {
+                switch (currentTool) {
+                    case 'rect': return 'rect';
+                    case 'circle': return 'circle';
+                    case 'ellipse': return 'ellipse';
+                    case 'line': return 'line';
+                    case 'text': return 'text';
+                    default: return 'rect';
+                }
+            }
+
+            function updateElement(element, x, y, width, height) {
+                switch (element.tagName) {
+                    case 'rect':
+                        element.setAttribute('x', Math.min(x, x + width));
+                        element.setAttribute('y', Math.min(y, y + height));
+                        element.setAttribute('width', Math.abs(width));
+                        element.setAttribute('height', Math.abs(height));
+                        break;
+
+                    case 'circle':
+                        element.setAttribute('cx', x);
+                        element.setAttribute('cy', y);
+                        element.setAttribute('r', Math.max(Math.abs(width), Math.abs(height)));
+                        break;
+
+                    case 'ellipse':
+                        element.setAttribute('cx', x);
+                        element.setAttribute('cy', y);
+                        element.setAttribute('rx', Math.abs(width));
+                        element.setAttribute('ry', Math.abs(height));
+                        break;
+
+                    case 'line':
+                        element.setAttribute('x1', startX);
+                        element.setAttribute('y1', startY);
+                        element.setAttribute('x2', x);
+                        element.setAttribute('y2', y);
+                        break;
+
+                    case 'text':
+                        element.setAttribute('x', x);
+                        element.setAttribute('y', y);
+                        break;
+                }
+            }
+
+            function selectElement(e) {
+                // Prevent selection when drawing
+                if (isDrawing) return;
+
+                // Clear previous selection
+                if (selectionBox) {
+                    svgViewport.removeChild(selectionBox);
+                    selectionBox = null;
+                }
+
+                // If clicking on an SVG element (but not the SVG canvas itself)
+                if (e.target !== svgCanvas && e.target.parentNode === svgCanvas) {
+                    currentElement = e.target;
+
+                    // Create selection box
+                    const bbox = currentElement.getBBox();
+                    selectionBox = document.createElement('div');
+                    selectionBox.className = 'selection-box';
+                    selectionBox.style.left = `${bbox.x * zoom}px`;
+                    selectionBox.style.top = `${bbox.y * zoom}px`;
+                    selectionBox.style.width = `${bbox.width * zoom}px`;
+                    selectionBox.style.height = `${bbox.height * zoom}px`;
+                    svgViewport.appendChild(selectionBox);
+
+                    // Update properties panel
+                    fillColor.value = currentElement.getAttribute('fill') || '#000000';
+                    strokeColor.value = currentElement.getAttribute('stroke') || 'none';
+                    strokeWidth.value = currentElement.getAttribute('stroke-width') || '1';
+                    strokeWidthValue.textContent = strokeWidth.value;
+                    opacity.value = Math.round(parseFloat(currentElement.getAttribute('opacity') || '1') * 100);
+                    opacityValue.textContent = `${opacity.value}%`;
+                } else {
+                    currentElement = null;
+                }
+            }
+
+            function setZoom(newZoom) {
+                zoom = Math.max(0.1, Math.min(newZoom, 10));
+                svgCanvas.style.transform = `scale(${zoom})`;
+                svgCanvas.style.transformOrigin = '0 0';
+                zoomLevel.textContent = `Zoom: ${Math.round(zoom * 100)}%`;
+
+                // Update selection box if exists
+                if (selectionBox && currentElement) {
+                    const bbox = currentElement.getBBox();
+                    selectionBox.style.left = `${bbox.x * zoom}px`;
+                    selectionBox.style.top = `${bbox.y * zoom}px`;
+                    selectionBox.style.width = `${bbox.width * zoom}px`;
+                    selectionBox.style.height = `${bbox.height * zoom}px`;
+                }
+            }
+
+            function fitToView() {
+                const viewportWidth = svgViewport.clientWidth;
+                const viewportHeight = svgViewport.clientHeight;
+                const svgWidth = svgCanvas.width.baseVal.value;
+                const svgHeight = svgCanvas.height.baseVal.value;
+
+                if (svgWidth > 0 && svgHeight > 0) {
+                    const scaleX = viewportWidth / svgWidth;
+                    const scaleY = viewportHeight / svgHeight;
+                    setZoom(Math.min(scaleX, scaleY));
+                }
+            }
+
+            function handleZoom(e) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.8 : 1.2;
+                setZoom(zoom * delta);
+            }
+
+            function updateDimensions() {
+                const width = svgCanvas.width.baseVal.value;
+                const height = svgCanvas.height.baseVal.value;
+                dimensions.textContent = `Dimensions: ${width} × ${height}`;
+            }
+        });
+    </script>
+</body>
+
+</html>
